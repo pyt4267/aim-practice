@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>AIM練習（ランキング機能付き）</title>
+  <title>AIM練習（リアルタイムランキング対応）</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body {
@@ -122,7 +122,7 @@
   <button id="shareBtn">スコアをXでシェア</button>
 
   <div id="ranking">
-    <h2>ランキング TOP 10</h2>
+    <h2>ランキング TOP 10（リアルタイム更新）</h2>
     <ol id="rankingList">
       <li>読み込み中...</li>
     </ol>
@@ -210,7 +210,6 @@
       submitScoreBtn.style.display = "block";
       shareBtn.style.display = "block";
       alert("ゲーム終了！あなたのスコアは " + score + " です！");
-      loadRanking(); // ゲーム終了時にランキング更新
     }
 
     async function submitScore() {
@@ -233,32 +232,30 @@
         alert("エラーが発生しました: " + e.message);
       }
       submitScoreBtn.disabled = false;
-      loadRanking();
     }
 
-    async function loadRanking() {
-      rankingList.innerHTML = "<li>読み込み中...</li>";
-      try {
-        const snapshot = await db.collection("scores")
-          .orderBy("score", "desc")
-          .limit(10)
-          .get();
-        if (snapshot.empty) {
-          rankingList.innerHTML = "<li>ランキングがありません。</li>";
-          return;
-        }
-        rankingList.innerHTML = "";
-        let rank = 1;
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const name = data.name || "名無し";
-          const sc = data.score || 0;
-          rankingList.innerHTML += `<li>${rank}. ${escapeHtml(name)} - ${sc}</li>`;
-          rank++;
+    // リアルタイムランキング監視
+    function listenRankingRealtime() {
+      db.collection("scores")
+        .orderBy("score", "desc")
+        .limit(10)
+        .onSnapshot(snapshot => {
+          rankingList.innerHTML = "";
+          if (snapshot.empty) {
+            rankingList.innerHTML = "<li>ランキングがありません。</li>";
+            return;
+          }
+          let rank = 1;
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            const name = data.name || "名無し";
+            const sc = data.score || 0;
+            rankingList.innerHTML += `<li>${rank}. ${escapeHtml(name)} - ${sc}</li>`;
+            rank++;
+          });
+        }, error => {
+          rankingList.innerHTML = `<li>ランキングの取得に失敗しました: ${escapeHtml(error.message)}</li>`;
         });
-      } catch (e) {
-        rankingList.innerHTML = `<li>ランキングの取得に失敗しました: ${escapeHtml(e.message)}</li>`;
-      }
     }
 
     // X（Twitter）シェアボタン
@@ -283,8 +280,8 @@
     submitScoreBtn.addEventListener("click", submitScore);
     shareBtn.addEventListener("click", shareScore);
 
-    // ページ読み込み時にランキングを表示
-    loadRanking();
+    // ページ読み込み時にリアルタイムランキング監視開始
+    listenRankingRealtime();
   </script>
 </body>
 </html>
