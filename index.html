@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>AIM練習</title>
+    <title>AIM練習（30秒スコアアタック）</title>
     <style>
         body {
             margin: 0;
@@ -12,12 +12,13 @@
             font-family: sans-serif;
             text-align: center;
         }
-        #score {
+        #score, #time {
             position: absolute;
             top: 10px;
-            left: 10px;
             font-size: 24px;
         }
+        #score { left: 10px; }
+        #time { right: 10px; }
         #target {
             position: absolute;
             width: 50px;
@@ -25,30 +26,53 @@
             background: red;
             border-radius: 50%;
             cursor: crosshair;
+            display: none; /* ゲーム開始前は非表示 */
             transition: transform 0.05s;
+        }
+        #startBtn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 15px 30px;
+            font-size: 20px;
+            background: #0a84ff;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        #startBtn:hover {
+            background: #006edc;
         }
     </style>
 </head>
 <body>
     <div id="score">スコア: 0</div>
+    <div id="time">残り: 30秒</div>
     <div id="target"></div>
+    <button id="startBtn">ゲーム開始</button>
 
     <script>
         const target = document.getElementById("target");
         const scoreDisplay = document.getElementById("score");
-        let score = 0;
+        const timeDisplay = document.getElementById("time");
+        const startBtn = document.getElementById("startBtn");
 
-        // クリック時にスコアを加算＆移動
+        let score = 0;
+        let timeLeft = 30;
+        let timerId = null;
+        let gameActive = false;
+
         target.addEventListener("click", () => {
+            if (!gameActive) return;
             score++;
             scoreDisplay.textContent = "スコア: " + score;
             moveTarget();
-            // 当たったとき少し縮む演出
             target.style.transform = "scale(0.8)";
             setTimeout(() => target.style.transform = "scale(1)", 50);
         });
 
-        // ターゲットをランダムな位置に移動
         function moveTarget() {
             const maxX = window.innerWidth - target.offsetWidth;
             const maxY = window.innerHeight - target.offsetHeight;
@@ -58,8 +82,33 @@
             target.style.top = y + "px";
         }
 
-        // 最初の位置
-        moveTarget();
+        function startGame() {
+            score = 0;
+            timeLeft = 30;
+            gameActive = true;
+            scoreDisplay.textContent = "スコア: 0";
+            timeDisplay.textContent = "残り: 30秒";
+            startBtn.style.display = "none";
+            target.style.display = "block";
+            moveTarget();
+
+            timerId = setInterval(() => {
+                timeLeft--;
+                timeDisplay.textContent = "残り: " + timeLeft + "秒";
+                if (timeLeft <= 0) endGame();
+            }, 1000);
+        }
+
+        function endGame() {
+            clearInterval(timerId);
+            gameActive = false;
+            target.style.display = "none";
+            startBtn.textContent = "もう一度遊ぶ";
+            startBtn.style.display = "block";
+            alert("ゲーム終了！あなたのスコアは " + score + " です！");
+        }
+
+        startBtn.addEventListener("click", startGame);
     </script>
 </body>
 </html>
