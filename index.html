@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>AIM練習</title>
+    <style>
+        body {
+            margin: 0;
+            background: #222;
+            overflow: hidden;
+            color: #fff;
+            font-family: sans-serif;
+            text-align: center;
+        }
+        #score {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 24px;
+        }
+        #target {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: red;
+            border-radius: 50%;
+            cursor: crosshair;
+            transition: transform 0.05s;
+        }
+    </style>
+</head>
+<body>
+    <div id="score">スコア: 0</div>
+    <div id="target"></div>
+
+    <script>
+        const target = document.getElementById("target");
+        const scoreDisplay = document.getElementById("score");
+        let score = 0;
+
+        // クリック時にスコアを加算＆移動
+        target.addEventListener("click", () => {
+            score++;
+            scoreDisplay.textContent = "スコア: " + score;
+            moveTarget();
+            // 当たったとき少し縮む演出
+            target.style.transform = "scale(0.8)";
+            setTimeout(() => target.style.transform = "scale(1)", 50);
+        });
+
+        // ターゲットをランダムな位置に移動
+        function moveTarget() {
+            const maxX = window.innerWidth - target.offsetWidth;
+            const maxY = window.innerHeight - target.offsetHeight;
+            const x = Math.random() * maxX;
+            const y = Math.random() * maxY;
+            target.style.left = x + "px";
+            target.style.top = y + "px";
+        }
+
+        // 最初の位置
+        moveTarget();
+    </script>
+</body>
+</html>
