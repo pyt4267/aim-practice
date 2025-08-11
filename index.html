@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>AIM練習（30秒スコアアタック）</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body {
             margin: 0;
@@ -11,18 +12,17 @@
             color: #fff;
             font-family: sans-serif;
             text-align: center;
+            touch-action: none; /* スマホでのスクロール無効化 */
         }
         #score, #time {
             position: absolute;
             top: 10px;
-            font-size: 24px;
+            font-size: clamp(16px, 4vw, 24px);
         }
         #score { left: 10px; }
         #time { right: 10px; }
         #target {
             position: absolute;
-            width: 50px;
-            height: 50px;
             background: red;
             border-radius: 50%;
             cursor: crosshair;
@@ -35,7 +35,7 @@
             left: 50%;
             transform: translate(-50%, -50%);
             padding: 15px 30px;
-            font-size: 20px;
+            font-size: clamp(16px, 5vw, 24px);
             background: #0a84ff;
             color: #fff;
             border: none;
@@ -45,6 +45,23 @@
         #startBtn:hover {
             background: #006edc;
         }
+        #shareBtn {
+            display: none;
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 20px;
+            font-size: clamp(14px, 4vw, 20px);
+            background: #1da1f2;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        #shareBtn:hover {
+            background: #0d8ddb;
+        }
     </style>
 </head>
 <body>
@@ -52,30 +69,40 @@
     <div id="time">残り: 30秒</div>
     <div id="target"></div>
     <button id="startBtn">ゲーム開始</button>
+    <button id="shareBtn">スコアをXでシェア</button>
 
     <script>
         const target = document.getElementById("target");
         const scoreDisplay = document.getElementById("score");
         const timeDisplay = document.getElementById("time");
         const startBtn = document.getElementById("startBtn");
+        const shareBtn = document.getElementById("shareBtn");
 
         let score = 0;
         let timeLeft = 30;
         let timerId = null;
         let gameActive = false;
 
-        target.addEventListener("click", () => {
+        // ターゲットをクリック / タップでスコア加算
+        function hitTarget() {
             if (!gameActive) return;
             score++;
             scoreDisplay.textContent = "スコア: " + score;
             moveTarget();
             target.style.transform = "scale(0.8)";
             setTimeout(() => target.style.transform = "scale(1)", 50);
-        });
+        }
+        target.addEventListener("click", hitTarget);
+        target.addEventListener("touchstart", hitTarget);
 
+        // ターゲット移動（画面サイズに応じた大きさ）
         function moveTarget() {
-            const maxX = window.innerWidth - target.offsetWidth;
-            const maxY = window.innerHeight - target.offsetHeight;
+            const size = Math.max(30, Math.min(window.innerWidth, window.innerHeight) * 0.08); // 最小30px
+            target.style.width = size + "px";
+            target.style.height = size + "px";
+
+            const maxX = window.innerWidth - size;
+            const maxY = window.innerHeight - size;
             const x = Math.random() * maxX;
             const y = Math.random() * maxY;
             target.style.left = x + "px";
@@ -89,6 +116,7 @@
             scoreDisplay.textContent = "スコア: 0";
             timeDisplay.textContent = "残り: 30秒";
             startBtn.style.display = "none";
+            shareBtn.style.display = "none";
             target.style.display = "block";
             moveTarget();
 
@@ -105,10 +133,18 @@
             target.style.display = "none";
             startBtn.textContent = "もう一度遊ぶ";
             startBtn.style.display = "block";
+            shareBtn.style.display = "block";
             alert("ゲーム終了！あなたのスコアは " + score + " です！");
         }
 
+        function shareScore() {
+            const url = encodeURIComponent(window.location.href);
+            const text = encodeURIComponent(`私のスコアは ${score}！あなたもAIM練習に挑戦してみて！`);
+            window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, "_blank");
+        }
+
         startBtn.addEventListener("click", startGame);
+        shareBtn.addEventListener("click", shareScore);
     </script>
 </body>
 </html>
