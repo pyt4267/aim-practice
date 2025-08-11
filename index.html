@@ -1,287 +1,39 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8" />
-  <title>AIM練習（リアルタイムランキング対応）</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    body {
-      margin: 0;
-      background: #222;
-      color: #fff;
-      font-family: sans-serif;
-      text-align: center;
-      overflow: hidden;
-      touch-action: none;
-    }
-    #score, #time {
-      position: absolute;
-      top: 10px;
-      font-size: clamp(16px, 4vw, 24px);
-    }
-    #score {
-      left: 10px;
-    }
-    #time {
-      right: 10px;
-    }
-    #target {
-      position: absolute;
-      background: red;
-      border-radius: 50%;
-      cursor: crosshair;
-      display: none;
-      transition: transform 0.05s;
-    }
-    #startBtn, #submitScoreBtn, #shareBtn {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 12px 24px;
-      font-size: clamp(14px, 4vw, 20px);
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      color: #fff;
-    }
-    #startBtn {
-      top: 50%;
-      background: #0a84ff;
-    }
-    #startBtn:hover {
-      background: #006edc;
-    }
-    #submitScoreBtn {
-      bottom: 100px;
-      background: #28a745;
-      display: none;
-    }
-    #submitScoreBtn:hover {
-      background: #1e7e34;
-    }
-    #shareBtn {
-      bottom: 40px;
-      background: #1da1f2;
-      display: none;
-    }
-    #shareBtn:hover {
-      background: #0d8ddb;
-    }
-    #nameInput {
-      position: absolute;
-      bottom: 150px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 10px;
-      font-size: clamp(14px, 4vw, 18px);
-      border-radius: 8px;
-      border: none;
-      width: 60%;
-      max-width: 300px;
-      display: none;
-    }
-    #ranking {
-      position: absolute;
-      top: 50px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 90%;
-      max-width: 400px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 10px;
-      padding: 10px;
-      font-size: clamp(14px, 3vw, 18px);
-      max-height: 300px;
-      overflow-y: auto;
-      color: #fff;
-      text-align: left;
-    }
-    #ranking h2 {
-      text-align: center;
-      margin-top: 0;
-      margin-bottom: 10px;
-      font-size: clamp(18px, 5vw, 24px);
-    }
-    #ranking ol {
-      padding-left: 20px;
-      margin: 0;
-    }
-  </style>
-  <!-- Firebase SDK（CDN版） -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-</head>
-<body>
-  <div id="score">スコア: 0</div>
-  <div id="time">残り: 30秒</div>
-  <div id="target"></div>
-  <button id="startBtn">ゲーム開始</button>
+function startGame() {
+  score = 0;
+  timeLeft = 30;
+  gameActive = true;
+  scoreDisplay.textContent = "スコア: 0";
+  timeDisplay.textContent = "残り: 30秒";
 
-  <input type="text" id="nameInput" placeholder="あなたの名前を入力してください (例: Player1)" maxlength="20" />
-  <button id="submitScoreBtn">スコアをランキングに登録</button>
-  <button id="shareBtn">スコアをXでシェア</button>
+  // 「スコア」と「残り」以外を非表示に
+  startBtn.style.display = "none";
+  nameInput.style.display = "none";
+  submitScoreBtn.style.display = "none";
+  shareBtn.style.display = "none";
+  document.getElementById("ranking").style.display = "none";
 
-  <div id="ranking">
-    <h2>ランキング TOP 10（リアルタイム更新）</h2>
-    <ol id="rankingList">
-      <li>読み込み中...</li>
-    </ol>
-  </div>
+  target.style.display = "block";
+  moveTarget();
 
-  <script>
-    // Firebase初期化
-    const firebaseConfig = {
-      apiKey: "AIzaSyCRuvw8H_r61j0uRIpfsb77FwBO5F5fAE0",
-      authDomain: "aim-practice-rank.firebaseapp.com",
-      projectId: "aim-practice-rank",
-      storageBucket: "aim-practice-rank.firebasestorage.app",
-      messagingSenderId: "249636207263",
-      appId: "1:249636207263:web:aa6951193c2654c5e940aa",
-      measurementId: "G-DF1GRJ97SB"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+  timerId = setInterval(() => {
+    timeLeft--;
+    timeDisplay.textContent = "残り: " + timeLeft + "秒";
+    if (timeLeft <= 0) endGame();
+  }, 1000);
+}
 
-    const target = document.getElementById("target");
-    const scoreDisplay = document.getElementById("score");
-    const timeDisplay = document.getElementById("time");
-    const startBtn = document.getElementById("startBtn");
-    const nameInput = document.getElementById("nameInput");
-    const submitScoreBtn = document.getElementById("submitScoreBtn");
-    const shareBtn = document.getElementById("shareBtn");
-    const rankingList = document.getElementById("rankingList");
+function endGame() {
+  clearInterval(timerId);
+  gameActive = false;
+  target.style.display = "none";
 
-    let score = 0;
-    let timeLeft = 30;
-    let timerId = null;
-    let gameActive = false;
+  // 元に戻す
+  startBtn.textContent = "もう一度遊ぶ";
+  startBtn.style.display = "block";
+  nameInput.style.display = "block";
+  submitScoreBtn.style.display = "block";
+  shareBtn.style.display = "block";
+  document.getElementById("ranking").style.display = "block";
 
-    function hitTarget() {
-      if (!gameActive) return;
-      score++;
-      scoreDisplay.textContent = "スコア: " + score;
-      moveTarget();
-      target.style.transform = "scale(0.8)";
-      setTimeout(() => (target.style.transform = "scale(1)"), 50);
-    }
-    target.addEventListener("click", hitTarget);
-    target.addEventListener("touchstart", hitTarget);
-
-    function moveTarget() {
-      const size = Math.max(30, Math.min(window.innerWidth, window.innerHeight) * 0.08);
-      target.style.width = size + "px";
-      target.style.height = size + "px";
-
-      const maxX = window.innerWidth - size;
-      const maxY = window.innerHeight - size;
-      const x = Math.random() * maxX;
-      const y = Math.random() * maxY;
-      target.style.left = x + "px";
-      target.style.top = y + "px";
-    }
-
-    function startGame() {
-      score = 0;
-      timeLeft = 30;
-      gameActive = true;
-      scoreDisplay.textContent = "スコア: 0";
-      timeDisplay.textContent = "残り: 30秒";
-      startBtn.style.display = "none";
-      nameInput.style.display = "none";
-      submitScoreBtn.style.display = "none";
-      shareBtn.style.display = "none";
-      target.style.display = "block";
-      moveTarget();
-
-      timerId = setInterval(() => {
-        timeLeft--;
-        timeDisplay.textContent = "残り: " + timeLeft + "秒";
-        if (timeLeft <= 0) endGame();
-      }, 1000);
-    }
-
-    function endGame() {
-      clearInterval(timerId);
-      gameActive = false;
-      target.style.display = "none";
-      startBtn.textContent = "もう一度遊ぶ";
-      startBtn.style.display = "block";
-      nameInput.style.display = "block";
-      submitScoreBtn.style.display = "block";
-      shareBtn.style.display = "block";
-      alert("ゲーム終了！あなたのスコアは " + score + " です！");
-    }
-
-    async function submitScore() {
-      const name = nameInput.value.trim() || "名無し";
-      if (score === 0) {
-        alert("スコアが0では登録できません。");
-        return;
-      }
-      submitScoreBtn.disabled = true;
-      try {
-        await db.collection("scores").add({
-          name: name,
-          score: score,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        });
-        alert("スコアを登録しました！");
-        nameInput.value = "";
-        submitScoreBtn.style.display = "none";
-      } catch (e) {
-        alert("エラーが発生しました: " + e.message);
-      }
-      submitScoreBtn.disabled = false;
-    }
-
-    // リアルタイムランキング監視
-    function listenRankingRealtime() {
-      db.collection("scores")
-        .orderBy("score", "desc")
-        .limit(10)
-        .onSnapshot(snapshot => {
-          rankingList.innerHTML = "";
-          if (snapshot.empty) {
-            rankingList.innerHTML = "<li>ランキングがありません。</li>";
-            return;
-          }
-          let rank = 1;
-          snapshot.forEach(doc => {
-            const data = doc.data();
-            const name = data.name || "名無し";
-            const sc = data.score || 0;
-            rankingList.innerHTML += `<li>${rank}. ${escapeHtml(name)} - ${sc}</li>`;
-            rank++;
-          });
-        }, error => {
-          rankingList.innerHTML = `<li>ランキングの取得に失敗しました: ${escapeHtml(error.message)}</li>`;
-        });
-    }
-
-    // X（Twitter）シェアボタン
-    function shareScore() {
-      const url = encodeURIComponent(window.location.href);
-      const text = encodeURIComponent(`私のスコアは ${score}！あなたもAIM練習に挑戦してみて！`);
-      window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, "_blank");
-    }
-
-    // 名前などをHTMLエスケープ（悪意対策）
-    function escapeHtml(text) {
-      return text.replace(/[&<>"']/g, (m) => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;'
-      }[m]));
-    }
-
-    startBtn.addEventListener("click", startGame);
-    submitScoreBtn.addEventListener("click", submitScore);
-    shareBtn.addEventListener("click", shareScore);
-
-    // ページ読み込み時にリアルタイムランキング監視開始
-    listenRankingRealtime();
-  </script>
-</body>
-</html>
+  alert("ゲーム終了！あなたのスコアは " + score + " です！");
+}
