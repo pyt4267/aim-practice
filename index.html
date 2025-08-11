@@ -103,7 +103,8 @@
       font-size: clamp(18px, 5vw, 24px);
     }
     #ranking ol {
-      padding-left: 20px;
+      list-style: none; /* 自動番号は非表示 */
+      padding-left: 0;
       margin: 0;
     }
   </style>
@@ -260,7 +261,18 @@
             const data = doc.data();
             const name = data.name || "名無し";
             const sc = data.score || 0;
-            rankingList.innerHTML += `<li>${rank}. ${escapeHtml(name)} - ${sc}</li>`;
+
+            const li = document.createElement("li");
+            li.style.display = "flex";
+            li.style.justifyContent = "center";
+            li.style.gap = "20px";
+            li.style.padding = "4px 0";
+            li.style.borderBottom = "1px solid rgba(255,255,255,0.2)";
+
+            // 半角スペース区切りでテキストを一括表示
+            li.textContent = `${rank} - ${name} ${sc} Score`;
+
+            rankingList.appendChild(li);
             rank++;
           });
         }, error => {
@@ -295,3 +307,6 @@
   </script>
 </body>
 </html>
+
+
+
